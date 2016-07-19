@@ -27,51 +27,70 @@ module CodeAnalytic
       private
 
       def avg_line_length
-        calculate_avg(parsed_lines.map(&:length).sum, parsed_lines.length.to_f)
+        build_avg_values(parsed_lines.map(&:length))
       end
 
       def avg_method_length
-        calculate_avg(parser.all_methods_lengths.sum, parser.all_methods_lengths.count)
+        build_avg_values(parser.all_methods_lengths)
       end
 
       def avg_methods_params
-        calculate_avg(parser.all_methods_params.sum, parser.all_methods_params.count)
+        build_avg_values(parser.all_methods_params)
       end
 
       def avg_methods_names_lengths
-        calculate_avg(parser.methods_names_lengths.sum, parser.methods_names_lengths.count)
+        build_avg_values(parser.methods_names_lengths)
       end
 
       def avg_variables_names_lengths
-        calculate_avg(parser.variables_names_lengths.sum, parser.variables_names_lengths.count)
+        build_avg_values(parser.variables_names_lengths)
       end
 
       def avg_of_empty_lines_per_method
-        calculate_avg(parser.empty_lines_by_methods.sum, parser.empty_lines_by_methods.count)
+        build_avg_values(parser.empty_lines_by_methods)
       end
 
       def avg_if_per_method
-        calculate_avg(parser.count_ifs_per_methods.sum, parser.all_methods.count)
+        build_avg_values(parser.count_ifs_per_methods)
       end
 
       def avg_variables_per_method
-        calculate_avg(parser.variables_per_methods.sum, parser.all_methods.count)
+        build_avg_values(parser.variables_per_methods)
       end
 
       def n_spaces_used
-        parser.spaces_used_by_lines.max_by { |x| parser.spaces_used_by_lines.count(x) } || 0
+        build_avg_values(parser.spaces_used_by_lines)
       end
 
       def private_methods_count
-        parser.private_methods_count
+        build_avg_values([parser.private_methods_count])
       end
 
       def instance_variables_count
-        parser.instance_variables_count
+        build_avg_values([parser.instance_variables_count])
+      end
+
+      def build_avg_values(items)
+        items = items.reject(&:zero?)
+        return {} if items.empty?
+        ranges_hash = build_ranges_hash(items)
+        result = calculate_ranges_avg(ranges_hash)
+        result.merge(avg: calculate_avg(result.sum { |v| v[1] }, result.count))
       end
 
       def calculate_avg(a, b)
         (a / b.to_f).nan? ? 0 : (a / b.to_f).round(2)
+      end
+
+      def calculate_ranges_avg(ranges)
+        ranges.each_key { |range| ranges[range] = calculate_avg(ranges[range].sum, ranges[range].count) }
+      end
+
+      def build_ranges_hash(items)
+        min, max = items.minmax
+        delta = max - min
+        ranges = delta.zero? ? [0..max] : (min..max).step(delta.to_f / 10).each_cons(2).map { |s, e| s.round(2)..e.round(2) }
+        items.sort.group_by { |item| ranges.find { |range| range.cover?(item) } }
       end
     end
   end
