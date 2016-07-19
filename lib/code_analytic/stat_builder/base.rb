@@ -2,6 +2,8 @@
 module CodeAnalytic
   module StatBuilder
     class Base
+      include CodeAnalytic::StatBuilder::Averaging
+
       def self.exist_builder?(path)
         (self::FILE_REGEXP =~ path).present?
       end

@@ -69,29 +69,6 @@ module CodeAnalytic
       def instance_variables_count
         build_avg_values([parser.instance_variables_count])
       end
-
-      def build_avg_values(items)
-        items = items.reject(&:zero?)
-        return {} if items.empty?
-        ranges_hash = build_ranges_hash(items)
-        result = calculate_ranges_avg(ranges_hash)
-        result.merge(avg: calculate_avg(result.sum { |v| v[1] }, result.count))
-      end
-
-      def calculate_avg(a, b)
-        (a / b.to_f).nan? ? 0 : (a / b.to_f).round(2)
-      end
-
-      def calculate_ranges_avg(ranges)
-        ranges.each_key { |range| ranges[range] = calculate_avg(ranges[range].sum, ranges[range].count) }
-      end
-
-      def build_ranges_hash(items)
-        min, max = items.minmax
-        delta = max - min
-        ranges = delta.zero? ? [0..max] : (min..max).step(delta.to_f / 10).each_cons(2).map { |s, e| s.round(2)..e.round(2) }
-        items.sort.group_by { |item| ranges.find { |range| range.cover?(item) } }
-      end
     end
   end
 end

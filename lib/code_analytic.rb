@@ -5,6 +5,7 @@ require 'active_support/all'
 
 module CodeAnalytic
   require 'code_analytic/parser/ruby'
+  require 'code_analytic/stat_builder/averaging'
   require 'code_analytic/stat_builder/base'
   require 'code_analytic/stat_builder/ruby'
 end
